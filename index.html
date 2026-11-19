@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Математика — Справочник</title>
+<style>
+  :root {
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --accent: #3b82f6;
+    --glass-bg: rgba(255, 255, 255, 0.45);
+    --glass-border: rgba(255, 255, 255, 0.8);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+    --line-color: #94a3b8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    color: var(--text);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    background-color: #e2e8f0;
+    background-image: 
+      radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.3) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.3) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.2) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  .tree-wrapper {
+    width: 100%;
+    max-width: 100%;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    transition: max-width 0.6s cubic-bezier(0.4, 0, 0.2, 1), padding 0.6s ease;
+  }
+  
+  body.content-open .tree-wrapper {
+    max-width: 480px;
+    padding: 20px;
+  }
+
+  .tree-container {
+    flex: 1;
+    padding: 40px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid var(--glass-border);
+    border-radius: 40px;
+    box-shadow: var(--glass-shadow);
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden; 
+    display: flex;
+    flex-direction: column;
+  }
+
+  .search-box { margin-bottom: 20px; position: relative; }
+  .search-box input {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--text);
+    outline: none;
+    transition: 0.3s;
+    font-family: inherit;
+  }
+  .search-box input:focus {
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    border-color: var(--accent);
+  }
+
+  .tree-root { display: flex; flex-direction: column; gap: 8px; }
+  .tree-node { position: relative; display: flex; flex-direction: column; }
+
+  .node-content {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 16px;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 600;
+    color: var(--text);
+    transition: 0.2s;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    width: fit-content;
+    position: relative;
+    z-index: 2;
+  }
+  
+  .node-content:hover { 
+    background: #ffffff;
+    border-color: rgba(59, 130, 246, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+  }
+
+  .tree-node.hidden { display: none !important; }
+
+  .arrow-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    transition: transform 0.3s ease;
+  }
+  .tree-node.expanded > .node-content > .arrow-icon {
+    transform: rotate(90deg);
+    color: var(--accent);
+  }
+
+  .tree-children {
+    display: none;
+    position: relative;
+    margin-left: 20px; 
+    padding-left: 30px; 
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  
+  .tree-node.expanded > .tree-children {
+    display: flex;
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-5px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .tree-children::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 24px;
+    bottom: 24px;
+    width: 2px;
+    background: var(--line-color);
+    z-index: 0;
+  }
+
+  .tree-children > .tree-node::before {
+    content: '';
+    position: absolute;
+    left: -30px;
+    top: 24px;
+    width: 30px;
+    height: 2px;
+    background: var(--line-color);
+    z-index: 0;
+  }
+
+  .tree-children > .tree-node:last-child::after {
+    content: '';
+    position: absolute;
+    left: -32px;
+    top: 25px;
+    bottom: 0;
+    width: 2px;
+    background: var(--glass-bg);
+    z-index: 0;
+  }
+
+  .level-1 > .node-content { font-weight: 800; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; background: rgba(255,255,255,0.9); }
+  .level-2 > .node-content { font-weight: 700; font-size: 1.05rem; }
+  .level-3 > .node-content { font-weight: 500; font-size: 0.95rem; color: var(--text-muted); }
+
+  .tree-node.active > .node-content {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 6px 20px rgba(59,130,246,0.4);
+  }
+  .tree-node.active > .node-content .arrow-icon { color: #fff; }
+
+  .desktop-reset-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(59,130,246,0.4);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transform: translateY(-20px);
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .desktop-reset-btn:hover {
+    background: #2563eb;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(59,130,246,0.6);
+  }
+  .desktop-reset-btn:active { transform: scale(0.95) !important; }
+
+  body.content-open .desktop-reset-btn {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow-y: auto;
+    opacity: 0;
+    transform: translateX(50px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  body.content-open .main-content {
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 0.4s;
+  }
+
+  .content-wrapper {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 60px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid var(--glass-border);
+    border-radius: 40px;
+    box-shadow: var(--glass-shadow);
+    width: calc(100% - 40px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .content-wrapper.fade-out { opacity: 0; transform: translateY(10px); }
+
+  .topic-header { margin-bottom: 40px; border-bottom: 2px solid rgba(0,0,0,0.05); padding-bottom: 20px; }
+  .breadcrumbs {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+  .topic-header h1 { font-size: 2.6rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; color: #0f172a; }
+  
+  .topic-body { line-height: 1.8; font-size: 1.1rem; color: #334155; font-family: 'Georgia', serif; }
+  .topic-body h3 { margin: 40px 0 16px; font-size: 1.3rem; font-weight: 700; text-transform: uppercase; font-family: 'Helvetica Neue', Arial, sans-serif; color: #0f172a; }
+  .topic-body p { margin-bottom: 20px; }
+  .topic-body b { color: #0f172a; }
+  
+  .formula {
+    background: rgba(255, 255, 255, 0.5);
+    padding: 20px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    margin: 24px 0;
+    font-weight: 700;
+    text-align: center;
+    color: #0f172a;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  }
+  
+  .topic-body ul, .topic-body ol { margin: 20px 0 20px 24px; }
+  .topic-body li { margin-bottom: 12px; }
+  
+  .example {
+    background: rgba(239, 246, 255, 0.5);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    padding: 20px 24px;
+    border-radius: 16px;
+    margin: 28px 0;
+  }
+  .example-title {
+    font-weight: 800;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    margin-bottom: 10px;
+    color: var(--accent);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+  }
+
+  .loading-text {
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    font-style: italic;
+    text-align: center;
+    margin-top: 50px;
+  }
+
+  @media (max-width: 768px) {
+    body { flex-direction: column; overflow: auto; height: auto; }
+    .tree-wrapper { width: 100%; padding: 16px; min-height: 100vh; margin: 0; }
+    body.content-open .tree-wrapper { display: none; }
+    .tree-container { padding: 20px; border-radius: 24px; }
+    .main-content {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      transform: translateY(100%); z-index: 100; transition-delay: 0s !important;
+      background: rgba(255, 255, 255, 0.95);
+      overflow-y: auto;
+    }
+    body.content-open .main-content { transform: translateY(0); }
+    .content-wrapper { padding: 30px 20px; margin: 20px auto; border-radius: 24px; }
+    .topic-header h1 { font-size: 2rem; }
+    .mobile-back { display: block; margin-bottom: 20px; background: none; border: none; font-size: 1rem; font-weight: 600; cursor: pointer; color: var(--text-muted); }
+    .desktop-reset-btn { display: none !important; }
+  }
+  @media (min-width: 769px) {
+    .mobile-back { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <button class="desktop-reset-btn" onclick="closeContent()">
+    <span>←</span> К дереву
+  </button>
+
+  <div class="tree-wrapper">
+    <div class="tree-container">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Поиск по темам...">
+      </div>
+      <div class="tree-root" id="treeContainer"></div>
+    </div>
+  </div>
+
+  <main class="main-content" id="mainContent">
+    <div class="content-wrapper" id="contentWrapper"></div>
+  </main>
+
+<script>
+  // ПОЛНЫЙ МАССИВ С КОНСПЕКТАМИ
+  const mathData = [
+    {
+      id: 'algebra',
+      title: 'Алгебра',
+      children: [
+        {
+          id: 'alg-7',
+          title: '7 класс',
+          children: [
+            { id: 'alg-7-1', title: 'Числовые и алгебраические выражения', content: `<p><b>Числовое выражение</b> состоит только из чисел и знаков действий. <b>Алгебраическое</b> содержит переменные.</p><div class="example"><div class="example-title">Пример</div><p>2x + 3 — алгебраическое. 5 + 2 — числовое.</p></div>` },
+            { id: 'alg-7-2', title: 'Линейные уравнения', content: `<p>Уравнение вида <b>ax = b</b>. При переносе слагаемого через знак равенства его знак меняется.</p><div class="formula">x = b / a</div>` },
+            { id: 'alg-7-3', title: 'Решение задач с помощью уравнений', content: `<p>Алгоритм: обозначить неизвестное за x, составить уравнение, решить его.</p>` },
+            { id: 'alg-7-4', title: 'Функции и их графики', content: `<p>Функция — зависимость y от x. График — множество точек на координатной плоскости.</p>` },
+            { id: 'alg-7-5', title: 'Линейная функция', content: `<p>Функция вида <b>y = kx + b</b>. График — прямая.</p>` },
+            { id: 'alg-7-6', title: 'Степень с натуральным показателем', content: `<div class="formula">aᵐ · aⁿ = aᵐ⁺ⁿ</div><div class="formula">aᵐ / aⁿ = aᵐ⁻ⁿ</div>` },
+            { id: 'alg-7-7', title: 'Одночлены и многочлены', content: `<p>Произведение чисел и переменных, а также их сумма. Умножение многочленов друг на друга.</p>` },
+            { id: 'alg-7-8', title: 'Формулы сокращённого умножения', content: `<div class="formula">(a+b)² = a²+2ab+b²</div><div class="formula">a²-b² = (a-b)(a+b)</div>` }
+          ]
+        },
+        {
+          id: 'alg-8',
+          title: '8 класс',
+          children: [
+            { id: 'alg-8-1', title: 'Рациональные дроби', content: `<p>Дроби, содержащие переменные. Сокращение, сложение, умножение.</p>` },
+            { id: 'alg-8-2', title: 'Квадратные корни', content: `<div class="formula">√(a·b) = √a · √b</div><p>Арифметический квадратный корень.</p>` },
+            { id: 'alg-8-3', title: 'Квадратные уравнения', content: `<div class="formula">D = b² - 4ac</div><div class="formula">x = (-b ± √D) / 2a</div>` },
+            { id: 'alg-8-4', title: 'Теорема Виета', content: `<div class="formula">x₁ + x₂ = -p</div><div class="formula">x₁ · x₂ = q</div>` },
+            { id: 'alg-8-5', title: 'Дробно-рациональные уравнения', content: `<p>Уравнения с переменной в знаменателе. Важно учитывать ОДЗ.</p>` },
+            { id: 'alg-8-6', title: 'Квадратичная функция', content: `<p>y = ax² + bx + c. График — парабола.</p><div class="formula">x₀ = -b / 2a</div>` },
+            { id: 'alg-8-7', title: 'Неравенства', content: `<p>При умножении на отрицательное число знак меняется. Метод интервалов.</p>` }
+          ]
+        },
+        {
+          id: 'alg-9',
+          title: '9 класс',
+          children: [
+            { id: 'alg-9-1', title: 'Свойства функций', content: `<p>Возрастание, убывание, четность, нечетность.</p>` },
+            { id: 'alg-9-2', title: 'Квадратные неравенства', content: `<p>Решаются через график параболы.</p>` },
+            { id: 'alg-9-3', title: 'Системы уравнений', content: `<p>Метод подстановки, метод сложения, графический метод.</p>` },
+            { id: 'alg-9-4', title: 'Арифметическая прогрессия', content: `<div class="formula">aₙ = a₁ + d(n-1)</div>` },
+            { id: 'alg-9-5', title: 'Геометрическая прогрессия', content: `<div class="formula">bₙ = b₁ · qⁿ⁻¹</div>` },
+            { id: 'alg-9-6', title: 'Элементы комбинаторики', content: `<div class="formula">Pₙ = n!</div><div class="formula">Cⁿₖ = n! / (k!(n-k)!)</div>` },
+            { id: 'alg-9-7', title: 'Степенная функция', content: `<p>Функции вида y = xⁿ.</p>` }
+          ]
+        },
+        {
+          id: 'alg-10',
+          title: '10 класс',
+          children: [
+            { id: 'alg-10-1', title: 'Тригонометрические функции', content: `<div class="formula">sin²α + cos²α = 1</div>` },
+            { id: 'alg-10-2', title: 'Тригонометрические тождества', content: `<div class="formula">tgα = sinα / cosα</div>` },
+            { id: 'alg-10-3', title: 'Тригонометрические уравнения', content: `<p>Решение уравнений вида sin x = a.</p>` },
+            { id: 'alg-10-4', title: 'Корень n-й степени', content: `<div class="formula">(ⁿ√a)ⁿ = a</div>` },
+            { id: 'alg-10-5', title: 'Степенная функция и её график', content: `<p>Графики зависят от показателя степени.</p>` },
+            { id: 'alg-10-6', title: 'Показательная функция', content: `<div class="formula">y = aˣ</div>` },
+            { id: 'alg-10-7', title: 'Показательные уравнения', content: `<p>Сводятся к равенству показателей степеней.</p>` },
+            { id: 'alg-10-8', title: 'Логарифмы', content: `<div class="formula">logₐ(x·y) = logₐx + logₐy</div>` }
+          ]
+        },
+        {
+          id: 'alg-11',
+          title: '11 класс',
+          children: [
+            { id: 'alg-11-1', title: 'Предел функции', content: `<div class="formula">lim (x→a) f(x) = L</div>` },
+            { id: 'alg-11-2', title: 'Производная', content: `<div class="formula">(xⁿ)' = n·xⁿ⁻¹</div>` },
+            { id: 'alg-11-3', title: 'Правила дифференцирования', content: `<div class="formula">(u·v)' = u'v + uv'</div>` },
+            { id: 'alg-11-4', title: 'Применение производной', content: `<p>Поиск максимумов и минимумов.</p>` },
+            { id: 'alg-11-5', title: 'Касательная к графику', content: `<div class="formula">y = f(x₀) + f'(x₀)(x - x₀)</div>` },
+            { id: 'alg-11-6', title: 'Первообразная и интеграл', content: `<div class="formula">∫xⁿ dx = xⁿ⁺¹/(n+1) + C</div>` },
+            { id: 'alg-11-7', title: 'Формула Ньютона-Лейбница', content: `<div class="formula">∫[a,b] f(x) dx = F(b) - F(a)</div>` },
+            { id: 'alg-11-8', title: 'Элементы теории вероятностей', content: `<p>Сложение и умножение вероятностей.</p>` }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'geometry',
+      title: 'Геометрия',
+      children: [
+        {
+          id: 'geo-7',
+          title: '7 класс',
+          children: [
+            { id: 'geo-7-1', title: 'Начальные геометрические сведения', content: `<p>Смежные и вертикальные углы.</p>` },
+            { id: 'geo-7-2', title: 'Треугольники', content: `<p>Сумма углов = 180°.</p><div class="formula">∠A + ∠B + ∠C = 180°</div>` },
+            { id: 'geo-7-3', title: 'Медианы, биссектрисы и высоты', content: `<p>Определения и свойства.</p>` },
+            { id: 'geo-7-4', title: 'Равнобедренный треугольник', content: `<p>Свойства равнобедренного треугольника.</p>` },
+            { id: 'geo-7-5', title: 'Параллельные прямые', content: `<p>Признаки параллельности.</p>` },
+            { id: 'geo-7-6', title: 'Соотношения между сторонами и углами', content: `<p>Неравенство треугольника.</p>` }
+          ]
+        },
+        {
+          id: 'geo-8',
+          title: '8 класс',
+          children: [
+            { id: 'geo-8-1', title: 'Четырёхугольники', content: `<p>Параллелограмм, прямоугольник, ромб, квадрат.</p>` },
+            { id: 'geo-8-2', title: 'Трапеция', content: `<p>Средняя линия трапеции.</p>` },
+            { id: 'geo-8-3', title: 'Теорема Пифагора', content: `<div class="formula">c² = a² + b²</div>` },
+            { id: 'geo-8-4', title: 'Площади фигур', content: `<div class="formula">S = ½·a·h</div>` },
+            { id: 'geo-8-5', title: 'Подобие треугольников', content: `<p>Отношение площадей равно k².</p>` },
+            { id: 'geo-8-6', title: 'Вписанная и описанная окружность', content: `<p>Свойства окружностей.</p>` }
+          ]
+        },
+        {
+          id: 'geo-9',
+          title: '9 класс',
+          children: [
+            { id: 'geo-9-1', title: 'Векторы', content: `<div class="formula">a · b = |a| · |b| · cos α</div>` },
+            { id: 'geo-9-2', title: 'Метод координат', content: `<div class="formula">d = √((x₂ - x₁)² + (y₂ - y₁)²)</div>` },
+            { id: 'geo-9-3', title: 'Теорема синусов', content: `<div class="formula">a/sin α = 2R</div>` },
+            { id: 'geo-9-4', title: 'Теорема косинусов', content: `<div class="formula">c² = a² + b² - 2ab·cos γ</div>` },
+            { id: 'geo-9-5', title: 'Соотношения в прямоугольном треугольнике', content: `<p>Синус, косинус, тангенс.</p>` }
+          ]
+        },
+        {
+          id: 'geo-10',
+          title: '10 класс',
+          children: [
+            { id: 'geo-10-1', title: 'Стереометрия (введение)', content: `<p>Аксиомы стереометрии.</p>` },
+            { id: 'geo-10-2', title: 'Параллельность в пространстве', content: `<p>Параллельность прямых и плоскостей.</p>` },
+            { id: 'geo-10-3', title: 'Перпендикулярность в пространстве', content: `<p>Перпендикулярность прямой и плоскости.</p>` },
+            { id: 'geo-10-4', title: 'Многогранники', content: `<div class="formula">V = S_осн · h</div>` }
+          ]
+        },
+        {
+          id: 'geo-11',
+          title: '11 класс',
+          children: [
+            { id: 'geo-11-1', title: 'Тела вращения', content: `<div class="formula">V(шара) = 4/3 · πR³</div>` },
+            { id: 'geo-11-2', title: 'Объёмы и площади поверхностей', content: `<div class="formula">S(сферы) = 4πR²</div>` }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'probability',
+      title: 'Вероятность и статистика',
+      children: [
+        {
+          id: 'prob-7',
+          title: '7 класс',
+          children: [
+            { id: 'prob-7-1', title: 'Случайные события', content: `<p>Достоверные, невозможные, случайные.</p>` },
+            { id: 'prob-7-2', title: 'Вероятность', content: `<div class="formula">P(A) = m / n</div>` },
+            { id: 'prob-7-3', title: 'Частота', content: `<p>Относительная частота события.</p>` }
+          ]
+        },
+        {
+          id: 'prob-8',
+          title: '8 класс',
+          children: [
+            { id: 'prob-8-1', title: 'Среднее арифметическое', content: `<p>Сумма / количество.</p>` },
+            { id: 'prob-8-2', title: 'Медиана и мода', content: `<p>Медиана — посередине, мода — самая частая.</p>` },
+            { id: 'prob-8-3', title: 'Размах', content: `<p>max - min.</p>` },
+            { id: 'prob-8-4', title: 'Комбинаторика', content: `<div class="formula">n! = 1·2·3···n</div>` }
+          ]
+        },
+        {
+          id: 'prob-9',
+          title: '9 класс',
+          children: [
+            { id: 'prob-9-1', title: 'Сложение вероятностей', content: `<div class="formula">P(A+B) = P(A) + P(B)</div>` },
+            { id: 'prob-9-2', title: 'Умножение вероятностей', content: `<div class="formula">P(A·B) = P(A) · P(B)</div>` },
+            { id: 'prob-9-3', title: 'Противоположные события', content: `<div class="formula">P(не A) = 1 - P(A)</div>` },
+            { id: 'prob-9-4', title: 'Геометрическая вероятность', content: `<p>Отношение площадей.</p>` }
+          ]
+        },
+        {
+          id: 'prob-10',
+          title: '10 класс',
+          children: [
+            { id: 'prob-10-1', title: 'Статистические данные', content: `<p>Выборка, гистограмма.</p>` },
+            { id: 'prob-10-2', title: 'Условная вероятность', content: `<div class="formula">P(A|B) = P(A ∩ B) / P(B)</div>` },
+            { id: 'prob-10-3', title: 'Независимость событий', content: `<p>События независимы, если P(A|B) = P(A).</p>` }
+          ]
+        },
+        {
+          id: 'prob-11',
+          title: '11 класс',
+          children: [
+            { id: 'prob-11-1', title: 'Формула полной вероятности', content: `<div class="formula">P(A) = Σ P(Hᵢ) · P(A|Hᵢ)</div>` },
+            { id: 'prob-11-2', title: 'Формула Байеса', content: `<div class="formula">P(Hᵢ|A) = P(Hᵢ)·P(A|Hᵢ) / P(A)</div>` },
+            { id: 'prob-11-3', title: 'Биномиальное распределение', content: `<div class="formula">P = Cⁿₖ · pᵏ · qⁿ⁻ᵏ</div>` }
+          ]
+        }
+      ]
+    }
+  ];
+
+  const treeContainer = document.getElementById('treeContainer');
+  const contentWrapper = document.getElementById('contentWrapper');
+  const mainContent = document.getElementById('mainContent');
+  const searchInput = document.getElementById('searchInput');
+
+  function buildTree(nodes, level = 1) {
+    let html = '';
+    nodes.forEach(node => {
+      const hasChildren = node.children && node.children.length > 0;
+      html += `<div class="tree-node level-${level}" id="node-${node.id}">`;
+      html += `<div class="node-content" onclick="handleNodeClick('${node.id}', ${hasChildren})">`;
+      if (hasChildren) {
+        html += `<span class="arrow-icon">▶</span>`;
+      } else {
+        html += `<span class="arrow-icon" style="opacity:0;"></span>`;
+      }
+      html += `<span class="node-title">${node.title}</span>`;
+      html += `</div>`;
+      if (hasChildren) {
+        html += `<div class="tree-children">`;
+        html += buildTree(node.children, level + 1);
+        html += `</div>`;
+      }
+      html += `</div>`;
+    });
+    return html;
+  }
+
+  treeContainer.innerHTML = buildTree(mathData);
+
+  // ЛОГИКА ПОИСКА (ИСПРАВЛЕНА)
+  searchInput.addEventListener('input', function(e) {
+    const query = e.target.value.toLowerCase().trim();
+    
+    if (query === '') {
+      document.querySelectorAll('.tree-node').forEach(node => {
+        node.classList.remove('hidden');
+        // Возвращаем свернутое состояние для чистоты
+        if (node.classList.contains('expanded') && !node.classList.contains('level-1')) {
+          node.classList.remove('expanded');
+        }
+      });
+      return;
+    }
+
+    function searchInNode(nodeElement) {
+      const titleElement = nodeElement.querySelector('.node-title');
+      if (!titleElement) return false;
+      
+      const titleText = titleElement.textContent.toLowerCase();
+      const isMatch = titleText.includes(query);
+      
+      let childMatch = false;
+      const childrenContainer = nodeElement.querySelector('.tree-children');
+      
+      if (childrenContainer) {
+        const childNodes = childrenContainer.querySelectorAll('.tree-node');
+        childNodes.forEach(child => {
+          if (searchInNode(child)) {
+            childMatch = true;
+          }
+        });
+      }
+      
+      const hasMatch = isMatch || childMatch;
+      
+      if (hasMatch) {
+        nodeElement.classList.remove('hidden');
+        if (childMatch && childrenContainer) {
+          nodeElement.classList.add('expanded'); 
+        }
+      } else {
+        nodeElement.classList.add('hidden'); 
+      }
+      
+      return hasMatch;
+    }
+
+    const rootNodes = document.querySelectorAll('#treeContainer > .tree-root > .tree-node');
+    rootNodes.forEach(rootNode => searchInNode(rootNode));
+  });
+
+  function handleNodeClick(nodeId, hasChildren) {
+    const nodeElement = document.getElementById(`node-${nodeId}`);
+    
+    if (hasChildren) {
+      nodeElement.classList.toggle('expanded');
+      return;
+    }
+
+    const nodeData = findNodeById(mathData, nodeId);
+    if (nodeData && nodeData.content) {
+      document.querySelectorAll('.tree-node').forEach(el => el.classList.remove('active'));
+      nodeElement.classList.add('active');
+      
+      document.body.classList.add('content-open');
+
+      const path = getNodePath(mathData, nodeId);
+      const breadcrumbHtml = path.map(p => p.title).join(' / ');
+      const mobileBack = `<button class="mobile-back" onclick="closeContent()">← Назад</button>`;
+
+      contentWrapper.classList.add('fade-out');
+
+      setTimeout(() => {
+        contentWrapper.innerHTML = `
+          ${mobileBack}
+          <div class="topic-header">
+            <div class="breadcrumbs">${breadcrumbHtml}</div>
+            <h1>${nodeData.title}</h1>
+          </div>
+          <div class="topic-body">${nodeData.content}</div>
+        `;
+        contentWrapper.classList.remove('fade-out');
+        mainContent.scrollTop = 0;
+      }, 200);
+    }
+  }
+
+  function closeContent() {
+    document.body.classList.remove('content-open');
+    document.querySelectorAll('.tree-node').forEach(el => el.classList.remove('active'));
+  }
+
+  function findNodeById(nodes, id) {
+    for (const node of nodes) {
+      if (node.id === id) return node;
+      if (node.children) {
+        const found = findNodeById(node.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  function getNodePath(nodes, targetId, currentPath = []) {
+    for (const node of nodes) {
+      const newPath = [...currentPath, { title: node.title }];
+      if (node.id === targetId) return newPath;
+      if (node.children) {
+        const found = getNodePath(node.children, targetId, newPath);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+</script>
+</body>
+</html>
